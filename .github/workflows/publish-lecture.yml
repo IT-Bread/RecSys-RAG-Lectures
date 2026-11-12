@@ -1,0 +1,30 @@
+name: Publish lecture files
+
+on:
+  push:
+    paths:
+      - '.github/assets/lecture.pptx.xz.b64'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore the original presentation and extract the slide outline
+        run: python3 .github/scripts/publish_lecture.py
+      - name: Commit the requested teaching materials
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- RecSys_RAG_lecture.pptx RecSys_RAG_slide_outline.txt README.md
+          if git diff --cached --quiet; then
+            echo 'Teaching materials are already up to date.'
+          else
+            git commit -m 'Add original RecSys/RAG lecture and 31-slide text outline'
+            git push origin HEAD:main
+          fi
